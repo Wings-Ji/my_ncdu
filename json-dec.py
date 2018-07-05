@@ -21,9 +21,12 @@ def display(data, parentpath,size=None,formt = 'm'):
     files_size = 0
     folder_size = 0
     exist_large_file = False
+    include_large_folder = False
+    is_large_folder = False
     for i in data:
         if isinstance(i,list):
-            folder_size += display(i, os.path.join(parentpath, i[0]["name"]),size)
+            fsize, include_large_folder = display(i, os.path.join(parentpath, i[0]["name"]),size)
+            folder_size += fsize
             continue
         if "dsize" in i and size:
             files_size += i['dsize']
@@ -38,14 +41,20 @@ def display(data, parentpath,size=None,formt = 'm'):
                 if formt == 'g':
                     print(i['dsize'] / (1024*1024*1024), end='Gb： ')
                     print(os.path.join(parentpath, i["name"]))
-    if (files_size > size * 1024 * 1024) and not exist_large_file:#没有大文件 但文件总和大于阈值
-        print((files_size+folder_size)/(1024*1024),end='mb: ')
-        print(parentpath+'********************DIR')
-    return files_size+folder_size
+    if (files_size+folder_size > size * 1024 * 1024) and not exist_large_file:#没有大文件 但本路径下文件总和大于阈值
+        is_large_folder = True
+        if not include_large_folder :
+            if formt == 'm':
+                print((files_size+folder_size)/(1024*1024),end='Mb: (directory)')
+                print(parentpath)
+            if formt == 'g':
+                print((files_size + folder_size) / (1024 *1024 * 1024), end='Gb: (directory)')
+                print(parentpath)
+    return files_size+folder_size, is_large_folder
 
 
 if __name__ == '__main__':
     path = '.'
     # os.system("ncdu -x %s -o scanresult"%path)
     data = json.loads(readFile('scanresult'))
-    display(data[-1], data[-1][0]["name"], 10,'m')
+    display(data[-1], data[-1][0]["name"], 100,'m')
