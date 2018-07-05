@@ -17,14 +17,18 @@ def readFile(filename):
         return fileRead
     except Exception as e:
         print("Get Path fail，Please Try：",e)
-
 def display(data, parentpath,size=None,formt = 'm'):
+    files_size = 0
+    folder_size = 0
+    exist_large_file = False
     for i in data:
         if isinstance(i,list):
-            display(i, os.path.join(parentpath, i[0]["name"]),size)
+            folder_size += display(i, os.path.join(parentpath, i[0]["name"]),size)
             continue
         if "dsize" in i and size:
+            files_size += i['dsize']
             if i["dsize"] > size * 1024 * 1024:
+                exist_large_file = True
                 if formt == 'k':
                     print(i['dsize']/1024,end='kb： ')
                     print(os.path.join(parentpath,i["name"]))
@@ -34,6 +38,10 @@ def display(data, parentpath,size=None,formt = 'm'):
                 if formt == 'g':
                     print(i['dsize'] / (1024*1024*1024), end='Gb： ')
                     print(os.path.join(parentpath, i["name"]))
+    if (files_size > size * 1024 * 1024) and not exist_large_file:#没有大文件 但文件总和大于阈值
+        print((files_size+folder_size)/(1024*1024),end='mb: ')
+        print(parentpath+'********************DIR')
+    return files_size+folder_size
 
 def main(argv):
     help = '''python3 my_ncdu.py  <-d>  <directory>  <options>  <value>
